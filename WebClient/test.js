@@ -128,8 +128,8 @@ $(function () {
         }
     });
 
-    ControllerManager.register('say', {
-        said: function (data, context) {
+    ControllerManager.register('notification', {
+        handle: function (data, context) {
             status(data);
         }
     });
@@ -154,14 +154,11 @@ $(function () {
     app.sock.onclose = function () {
         status('Closed');
     };
-
- 
+     
     $('#login-form').submit(function () {
         var username = $('#username').val();
 
-        app.send('auth.login', {
-            username: username
-        });
+        app.send('auth.login', { username: username });
 
         return false;
     });
@@ -169,9 +166,12 @@ $(function () {
     $('#message-form').submit(function () {
         var message = $('#message').val();
 
-        app.send('test.say', message);
+        app.send('notification.broadcast', {
+            toUserIds: $('#toUserIds').val().split(','), 
+            title: $('#title').val(),
+            subTitle: $('#subTitle').val()
+        });
 
         return false;
     })
-
 });

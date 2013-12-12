@@ -4,19 +4,54 @@
     <title>Socket to me</title>
     <script src="jquery-2.0.3.min.js"></script>
     <script src="test.js"></script>
+
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+            font-size: 1.1em;
+        }
+
+        form > div, .status-container, form {
+            padding: .5em 1em 1em;
+        }
+
+        .status-container {
+            background: #F5F5F5;
+            border: 1px solid #EEE;
+        }
+    </style>
 </head>
 <body>
     <h1>Testing...</h1>
+
+    <h2>Login</h2>
     <form id="login-form" method="post" action="/">
-        <input type="text" id="username" placeholder="username" />
+        <div>
+            <label>Username</label>
+            <input type="text" id="username" placeholder="username" value="sys" />
+        </div>
         <button type="submit">Login</button>
     </form>
 
+    <h2>Broadcast</h2>
     <form id="message-form" method="post" action="/">
-        <input type="text" id="message" placeholder="message" />
+        <div>
+            <label>To Users</label>
+            <input id="toUserIds" type="text" value="cdavies, jgarwood" />
+        </div>
+        <div>
+            <label>Title</label>
+            <input id="title" type="text" value="Hey, you guys!" />
+        </div>
+        <div>
+            <label>Subtitle</label>
+            <input id="subTitle" type="text" value="Wazzup?" />
+        </div>
         <button type="submit">Send Message</button>
     </form>
 
-    <div id="status"></div>
+    <div class="status-container">
+        <div id="status"></div>
+    </div>
 </body>
 </html>
