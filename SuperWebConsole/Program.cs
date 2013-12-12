@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using SuperSocket.SocketBase;
+﻿using AutoMapper;
 using SuperWebServer;
-using System.Reflection;
-using System.Web;
-using System.Net;
+using System;
 using System.Collections.Concurrent;
-using AutoMapper;
+using System.Collections.Generic;
+using System.Net;
+using System.Linq;
+using System.Threading;
 
 namespace SuperWebSocket.Samples.BasicConsole
 {
@@ -114,12 +111,73 @@ namespace SuperWebSocket.Samples.BasicConsole
         public IEnumerable<string> ToUserIds { get; set; }
     }
 
+    public class MessageHistory<T>
+    {
+        private HistoryRecord<T>[] records;
+        private int startIndex;
+
+        public MessageHistory(int maxSize)
+        {
+            this.startIndex = maxSize - 1;
+            this.records = new HistoryRecord<T>[maxSize];
+        }
+
+        public void Add(IEnumerable<string> userIds, T message)
+        {
+            var record = new HistoryRecord<T> { UserIds = userIds, Record = message };
+
+            lock (records) {
+                startIndex = (startIndex + 1) % records.Length;
+                records[startIndex] = record;
+            }
+        }
+
+        public IEnumerable<T> GetLastN(int n, string userId)
+        {
+            return Records(userId).Take(n).Select(r => r.Record);
+        }
+
+        private IEnumerable<HistoryRecord<T>> Records(string userId)
+        {
+            var index = this.startIndex;
+            for (var i = 0; i < records.Length; ++i)
+            {
+                var record = records[index];
+
+                if (record == null) break;
+
+                if (record.UserIds.Any(id => id == userId))
+                    yield return record;
+
+                index -= 1;
+                if (index < 0) index = records.Length - 1;
+            }
+        }
+
+        private class HistoryRecord<T>
+        {
+            public T Record { get; set; }
+
+            public IEnumerable<string> UserIds { get; set; }
+        }
+    }
+
     public class NotificationController : AuthenticatedSuperController
     {
+        private MessageHistory<Notification> history = new MessageHistory<Notification>(1000);
+
         [Syscall]
         public void Broadcast(BroadcastNotification broadcast, IBaseSession session)
         {
-            AuthenticatedSessions.Broadcast(new WebSocketMessage("Notification.Handle", broadcast.MapTo<Notification>(), broadcast.ToUserIds));
+            var notification = broadcast.MapTo<Notification>();
+            history.Add(broadcast.ToUserIds, notification);
+            AuthenticatedSessions.Broadcast(new WebSocketMessage("Notification.Handle", notification, broadcast.ToUserIds));
+        }
+
+        public void GetLastN(int maxNotifications, IBaseSession session)
+        {
+            maxNotifications = Math.Min(100, Math.Max(0, maxNotifications));
+            session.Send(new WebSocketMessage("Notification.Handle", history.GetLastN(maxNotifications, session.UserId)));
         }
     }
 

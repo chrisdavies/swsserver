@@ -103,12 +103,12 @@ namespace SuperWebServer
 
             private void PostFilter(object model, IBaseSession session)
             {
-                preFilters.ForEach(filter => filter.BeforeExecute(model, session));
+                postFilters.ForEach(filter => filter.AfterExecute(model, session));
             }
 
             private void PreFilter(object model, IBaseSession session)
             {
-                postFilters.ForEach(filter => filter.AfterExecute(model, session));
+                preFilters.ForEach(filter => filter.BeforeExecute(model, session));
             }
         }
 
