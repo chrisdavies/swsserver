@@ -62,6 +62,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AuthenticatedSessions.cs" />
+    <Compile Include="AfterExecuteAttribute.cs" />
+    <Compile Include="BeforeExecuteAttribute.cs" />
     <Compile Include="IBaseSession.cs" />
     <Compile Include="IMessageProcessor.cs" />
     <Compile Include="ISuperController.cs" />
