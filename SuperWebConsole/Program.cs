@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Web;
 using System.Net;
 using System.Collections.Concurrent;
+using AutoMapper;
 
 namespace SuperWebSocket.Samples.BasicConsole
 {
@@ -16,7 +17,7 @@ namespace SuperWebSocket.Samples.BasicConsole
         static void Main(string[] args)
         {
             var processor = new SuperMessageProcessor();
-            processor.Scan(typeof(Program).Assembly);
+            processor.AddControllersFromAssemblies(typeof(Program).Assembly);
 
             using (var server = new SuperServer<ExampleSession>(8181, processor))
             {
@@ -29,37 +30,6 @@ namespace SuperWebSocket.Samples.BasicConsole
                     command = Console.ReadLine();
                 }
             }
-        }
-    }
-
-    public static class AuthenticatedSessions
-    {
-        private static ConcurrentDictionary<string, ConcurrentDictionary<EndPoint, IBaseSession>> authenticatedUsers =
-               new ConcurrentDictionary<string, ConcurrentDictionary<EndPoint, IBaseSession>>(StringComparer.OrdinalIgnoreCase);
-
-        public static void Add(IBaseSession session)
-        {
-            var userConnections = authenticatedUsers.GetOrAdd(session.UserId, s => new ConcurrentDictionary<EndPoint, IBaseSession>());
-            userConnections.TryAdd(session.RemoteAddress, session);
-        }
-
-        public static void Remove(IBaseSession session)
-        {
-            if (session.IsAuthenticated)
-            {
-                var contexts = ContextsFor(session.UserId);
-                if (contexts != null)
-                {
-                    contexts.TryRemove(session.RemoteAddress, out session);
-                }
-            }
-        }
-
-        private static ConcurrentDictionary<EndPoint, IBaseSession> ContextsFor(string userId)
-        {
-            ConcurrentDictionary<EndPoint, IBaseSession> contexts;
-            authenticatedUsers.TryGetValue(userId, out contexts);
-            return contexts;
         }
     }
 
@@ -78,20 +48,31 @@ namespace SuperWebSocket.Samples.BasicConsole
         }
     }
 
-    public abstract class SuperController: ISuperController
-    {
-        public virtual void BeforeExecute(object model, IBaseSession session)
-        {
-        }
-    }
-
-    public abstract class AuthorizedSuperController : SuperController
+    public class AuthenticatedAttribute : SuperWebServer.BeforeExecuteAttribute
     {
         public override void BeforeExecute(object model, IBaseSession session)
         {
-            if (!session.IsAuthenticated) 
+            if (!session.IsAuthenticated)
                 SuperServerException.Throw(HttpStatusCode.Unauthorized, "Please login");
         }
+    }
+
+    public class SyscallAttribute : SuperWebServer.BeforeExecuteAttribute
+    {
+        public override void BeforeExecute(object model, IBaseSession session)
+        {
+            if (session.UserId != "sys")
+                SuperServerException.Throw(HttpStatusCode.Forbidden, "Only the sys account can call this method.");
+        }
+    }
+
+    public abstract class SuperController: ISuperController
+    {
+    }
+
+    [Authenticated]
+    public abstract class AuthenticatedSuperController : SuperController
+    {
     }
 
     public class AuthController : SuperController
@@ -119,11 +100,34 @@ namespace SuperWebSocket.Samples.BasicConsole
         public string Password { get; set; }
     }
 
-    public class TestController : AuthorizedSuperController
+    public class Notification
     {
-        public void Say(string message, IBaseSession session)
+        public string Type { get; set; }
+
+        public string Title { get; set; }
+
+        public string Subtitle { get; set; }
+    }
+
+    public class BroadcastNotification : Notification
+    {
+        public IEnumerable<string> ToUserIds { get; set; }
+    }
+
+    public class NotificationController : AuthenticatedSuperController
+    {
+        [Syscall]
+        public void Broadcast(BroadcastNotification broadcast, IBaseSession session)
         {
-            session.Send(new WebSocketMessage("Say.Said", "Said " + message + " at  " + DateTime.Now, "cdavies", "jgarwood"));
+            AuthenticatedSessions.Broadcast(new WebSocketMessage("Notification.Handle", broadcast.MapTo<Notification>(), broadcast.ToUserIds));
+        }
+    }
+
+    public static class ObjectEx
+    {
+        public static T MapTo<T>(this object o) where T : new()
+        {
+            return Mapper.Map<T>(o);
         }
     }
 }

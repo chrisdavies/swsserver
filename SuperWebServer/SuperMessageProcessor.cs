@@ -17,7 +17,7 @@ namespace SuperWebServer
     {
         private ConcurrentDictionary<string, ControllerMethod> methods = new ConcurrentDictionary<string, ControllerMethod>(StringComparer.OrdinalIgnoreCase);
         
-        public void Scan(params Assembly[] assemblies)
+        public void AddControllersFromAssemblies(params Assembly[] assemblies)
         {
             assemblies
                 .Select(a => a.GetTypesDerivedFrom<ISuperController>(true))
