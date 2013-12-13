@@ -80,9 +80,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SuperWebServer\SuperWebServer.csproj">
+    <ProjectReference Include="..\WebSocketService\WebSocketService.csproj">
       <Project>{81aac9ac-8b84-46d4-81ce-9f8bc3f74fe8}</Project>
-      <Name>SuperWebServer</Name>
+      <Name>WebSocketService</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

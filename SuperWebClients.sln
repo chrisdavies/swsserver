@@ -33,6 +33,8 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "WebClient", "http://localho
 		SlnRelativePath = "WebClient\"
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketService", "WebSocketService\WebSocketService.csproj", "{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{D054FB34-D7E6-4E8A-A295-C1AD8AAAED23}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D054FB34-D7E6-4E8A-A295-C1AD8AAAED23}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{D054FB34-D7E6-4E8A-A295-C1AD8AAAED23}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

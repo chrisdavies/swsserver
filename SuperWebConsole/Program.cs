@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
-using SuperWebServer;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Linq;
 using System.Threading;
+using WebSocketService.Server;
+using WebSocketService.Sys;
+using WebSocketService.JSON;
 
 namespace SuperWebSocket.Samples.BasicConsole
 {
@@ -13,88 +15,85 @@ namespace SuperWebSocket.Samples.BasicConsole
     {
         static void Main(string[] args)
         {
-            var processor = new SuperMessageProcessor();
-            processor.AddControllersFromAssemblies(typeof(Program).Assembly);
+            var router = new MyRouter(new JSONSerializer());
+            router.AddControllersFromAssemblies(typeof(Program).Assembly);
 
-            using (var server = new SuperServer<ExampleSession>(8181, processor))
+            using (var server = new WebSocketService<MySession>(8181, router, router))
             {
-                Console.WriteLine("SuperWebSocket server running.");
-                Console.WriteLine("Press 'q' to quit.");
-
-                var command = Console.ReadLine();
-                while (command != "q")
-                {
-                    command = Console.ReadLine();
-                }
+                Console.WriteLine("Running. Press 'q' to quit");
+                while (Console.ReadLine() != "q") { }
             }
         }
     }
 
-    public class ExampleSession : SuperSession
+    public enum UserType
     {
-        public void Authorized(string userId)
-        {
-            this.UserId = userId;
-            AuthenticatedSessions.Add(this);
-        }
-
-        public override void Dispose()
-        {
-            AuthenticatedSessions.Remove(this);
-            base.Dispose();
-        }
+        User,
+        System
     }
 
-    public class AuthenticatedAttribute : SuperWebServer.BeforeExecuteAttribute
+    public class User
     {
-        public override void BeforeExecute(object model, IBaseSession session)
-        {
-            if (!session.IsAuthenticated)
-                SuperServerException.Throw(HttpStatusCode.Unauthorized, "Please login");
-        }
+        public UserType Type { get; set; }
+
+        public string UserId { get; set; }
     }
 
-    public class SyscallAttribute : SuperWebServer.BeforeExecuteAttribute
+    public class MySession : BasicSession
     {
-        public override void BeforeExecute(object model, IBaseSession session)
+        public UserType UserType { get; set; }
+
+        public MySession(User user, IChannel channel, IBroadcaster broadcaster, ISerializer serializer)
+            : base(user.UserId, channel, broadcaster, serializer)
         {
-            if (session.UserId != "sys")
-                SuperServerException.Throw(HttpStatusCode.Forbidden, "Only the sys account can call this method.");
+            this.UserType = user.Type;
         }
     }
 
-    public abstract class SuperController: ISuperController
+    public class MyRouter : BasicRouter<MySession>
     {
-    }
-
-    [Authenticated]
-    public abstract class AuthenticatedSuperController : SuperController
-    {
-    }
-
-    public class AuthController : SuperController
-    {
-        public string validUsernames = ";cdavies;jmoore;jgarwood;sys;";
-
-        public void Login(LoginCredentials credentials, ExampleSession session)
+        public MyRouter(ISerializer serializer)
+            : base(serializer)
         {
-            if (session.IsAuthenticated)
-                SuperServerException.Throw(HttpStatusCode.Forbidden, "You cannot reauthenticate on an authenticated connection");
+        }
 
-            if (!validUsernames.Contains(";" + credentials.Username + ";"))
-                SuperServerException.Throw(HttpStatusCode.Unauthorized, "Invalid username");
+        public override MySession Create(IChannel channel)
+        {
+            var user = GetUser(channel);
+            if (user == null) return null;
 
-            session.Authorized(credentials.Username);
+            var session = new MySession(user, channel, this.Sessions, this.Serializer);
+            if (user.Type == UserType.System) return session;
 
-            session.Send(new WebSocketMessage("Auth.Authorized", credentials));
+            return this.Sessions.Add(session);
+        }
+
+        private User GetUser(IChannel channel)
+        {
+            var id = channel.Metadata["system"];
+            if (id != null)
+            {
+                return new User { UserId = id, Type = UserType.System };
+            }
+
+            id = channel.Metadata["user"];
+            if (id != null)
+            {
+                return new User { UserId = id, Type = UserType.User };
+            }
+
+            return null;
         }
     }
-
-    public class LoginCredentials
+    
+    public class SyscallAttribute : BeforeExecuteAttribute
     {
-        public string Username { get; set; }
-
-        public string Password { get; set; }
+        public override void BeforeExecute(object model, ISession session)
+        {
+            var realSession = session as MySession;
+            if (realSession == null || realSession.UserType != UserType.System)
+                WebSocketException.ThrowForbidden("Only the sys account can call this method.");
+        }
     }
 
     public class Notification
@@ -126,7 +125,8 @@ namespace SuperWebSocket.Samples.BasicConsole
         {
             var record = new HistoryRecord<T> { UserIds = userIds, Record = message };
 
-            lock (records) {
+            lock (records)
+            {
                 startIndex = (startIndex + 1) % records.Length;
                 records[startIndex] = record;
             }
@@ -162,22 +162,22 @@ namespace SuperWebSocket.Samples.BasicConsole
         }
     }
 
-    public class NotificationController : AuthenticatedSuperController
+    public class NotificationController : IController
     {
         private MessageHistory<Notification> history = new MessageHistory<Notification>(1000);
 
         [Syscall]
-        public void Broadcast(BroadcastNotification broadcast, IBaseSession session)
+        public void Broadcast(BroadcastNotification broadcast, ISession session)
         {
             var notification = broadcast.MapTo<Notification>();
             history.Add(broadcast.ToUserIds, notification);
-            AuthenticatedSessions.Broadcast(new WebSocketMessage("Notification.Handle", notification, broadcast.ToUserIds));
+            session.Broadcast(broadcast.ToUserIds, new OutgoingMessage("Notification.Handle", notification));
         }
 
-        public void GetLastN(int maxNotifications, IBaseSession session)
+        public void GetLastN(int maxNotifications, ISession session)
         {
             maxNotifications = Math.Min(100, Math.Max(0, maxNotifications));
-            session.Send(new WebSocketMessage("Notification.Handle", history.GetLastN(maxNotifications, session.UserId)));
+            session.Write(new OutgoingMessage("Notification.Handle", history.GetLastN(maxNotifications, session.UserId)));
         }
     }
 

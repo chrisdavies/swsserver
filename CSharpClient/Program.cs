@@ -7,11 +7,51 @@
     using System.Net;
     using System.Threading;
     using System.Linq;
+    using WebSocketService.Client;
 
     public static class Program
     {
+        private class TestProcessor : IConnectionProcessor
+        {
+            public void Error(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            public void Opened()
+            {
+                Console.WriteLine("Opened");
+            }
+
+            public void Closed()
+            {
+                Console.WriteLine("Closed");
+            }
+
+            public void MessageReceived(string message)
+            {
+                Console.WriteLine(message);
+            }
+        }
+
         [STAThread]
         public static void Main(string[] args)
+        {
+            using (var sock = new WebSocketClient("ws://localhost:8181/", new TestProcessor(), new SystemCredential("abcdefg")))
+            {
+                Console.WriteLine("Press 'q' to quit");
+
+                var line = Console.ReadLine();
+
+                while (line != "q")
+                {
+                    sock.Send(line);
+                    line = Console.ReadLine();
+                }
+            }
+        }
+
+        private static void SimpleMessageTest()
         {
             var sweb = new WebSocket4Net.WebSocket("ws://localhost:8181/");
 

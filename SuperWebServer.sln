@@ -10,9 +10,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7AC80D
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SuperWebServer", "SuperWebServer\SuperWebServer.csproj", "{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SuperWebConsole", "SuperWebConsole\SuperWebConsole.csproj", "{535FD785-14A4-4E44-B07A-B697A667FB58}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketService", "WebSocketService\WebSocketService.csproj", "{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,14 +20,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{535FD785-14A4-4E44-B07A-B697A667FB58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{535FD785-14A4-4E44-B07A-B697A667FB58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{535FD785-14A4-4E44-B07A-B697A667FB58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{535FD785-14A4-4E44-B07A-B697A667FB58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81AAC9AC-8B84-46D4-81CE-9F8BC3F74FE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
