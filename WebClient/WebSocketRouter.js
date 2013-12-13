@@ -36,14 +36,9 @@ WebSocketRouter.prototype = {
 
     attachTo: function (socket) {
         var me = this;
-        var context = {
-            send: function (fnName, data) {
-                socket.send({ fn: fnName, data: data });
-            }
-        };
 
         socket.onmessage = function (msg) {
-            me.invoke(msg.fn, msg.data, context);
+            me.invoke(msg.fn, msg.data, socket);
         }
     },
 

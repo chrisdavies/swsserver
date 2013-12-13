@@ -8,10 +8,6 @@
         alert(JSON.stringify(err));
     });
 
-    router.addRoute('auth.authorized', function (msg, context) {
-        context.send('notification.getLastN', 10);
-    });
-
     router.addRoute('notification.handle', function (notification) {
         if (notification.length) {
             notifications = notification;
@@ -28,8 +24,8 @@
     router.attachTo(sock);
 
     me.sock.onopen = function () {
-        sock.send({ fn: 'auth.login', data: { username: options.securityToken } });
         options.connected && options.connected();
+        sock.send('notification.getLastN', 10);
     };
     me.sock.onclose = function () { options.disconnected && options.disconnected(); };
 }

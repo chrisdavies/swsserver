@@ -44,8 +44,9 @@ RetryableSocket.prototype = {
         }
     },
 
-    send: function (obj) {
-        this.sock.send(JSON.stringify(obj));
+    send: function (fn, obj) {
+        var message = (obj === undefined) ? fn : { fn: fn, data: obj };
+        this.sock.send(JSON.stringify(message));
     },
 
     close: function () {
